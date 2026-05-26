@@ -8,7 +8,7 @@ from datetime import datetime
 app = FastAPI()
 
 # =========================
-# SQLite DB 초기화
+# DB 초기화
 # =========================
 
 conn = sqlite3.connect("logs.db", check_same_thread=False)
@@ -89,9 +89,6 @@ def save_log(user, model, prompt, result):
 # 메인 화면
 # =========================
 
-# Gemini 스타일 AI Gateway UI
-
-```python
 @app.get("/", response_class=HTMLResponse)
 def home():
 
@@ -100,8 +97,8 @@ def home():
 <html lang="ko">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>AI Gateway</title>
 
@@ -114,167 +111,230 @@ def home():
         }
 
         body {
+
             font-family: Arial, sans-serif;
+
             background: #0f172a;
+
             color: white;
+
             height: 100vh;
+
             display: flex;
         }
 
-        /* 좌측 사이드바 */
+        /* 사이드바 */
 
         .sidebar {
+
             width: 260px;
+
             background: #111827;
+
             border-right: 1px solid #1e293b;
+
             padding: 20px;
+
             display: flex;
+
             flex-direction: column;
+
             gap: 20px;
         }
 
         .logo {
+
             font-size: 24px;
+
             font-weight: bold;
+
             color: #8b5cf6;
         }
 
-        .new-chat {
-            background: #1e293b;
-            border: 1px solid #334155;
-            color: white;
-            padding: 12px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .new-chat:hover {
-            background: #334155;
-        }
-
         .menu-box {
+
             background: #111827;
+
             border: 1px solid #1e293b;
+
             border-radius: 16px;
+
             padding: 16px;
         }
 
         .menu-title {
+
             font-size: 13px;
+
             color: #94a3b8;
+
             margin-bottom: 10px;
         }
 
         select,
         input {
+
             width: 100%;
+
             padding: 12px;
+
             border-radius: 12px;
+
             border: 1px solid #334155;
+
             background: #1e293b;
+
             color: white;
         }
 
         /* 메인 */
 
         .main {
+
             flex: 1;
+
             display: flex;
+
             flex-direction: column;
+
             justify-content: space-between;
         }
 
         .top {
+
             padding: 30px;
+
             overflow-y: auto;
         }
 
         .welcome {
+
             font-size: 42px;
+
             font-weight: bold;
+
             margin-top: 120px;
+
             text-align: center;
+
             background: linear-gradient(to right, #60a5fa, #a78bfa);
+
             -webkit-background-clip: text;
+
             -webkit-text-fill-color: transparent;
         }
 
         .sub {
+
             text-align: center;
+
             margin-top: 14px;
+
             color: #94a3b8;
+
             font-size: 18px;
         }
 
-        /* 결과창 */
-
         .result-box {
+
             margin: 40px auto;
+
             width: 80%;
+
             background: #111827;
+
             border: 1px solid #1e293b;
+
             border-radius: 20px;
+
             padding: 24px;
+
             min-height: 120px;
+
             white-space: pre-wrap;
+
             line-height: 1.7;
+
             font-size: 15px;
         }
 
-        /* 하단 입력창 */
+        /* 입력창 */
 
         .bottom {
+
             padding: 20px;
+
             display: flex;
+
             justify-content: center;
         }
 
         .input-box {
+
             width: 80%;
+
             background: #111827;
+
             border: 1px solid #334155;
+
             border-radius: 24px;
+
             padding: 18px;
+
             display: flex;
+
             flex-direction: column;
+
             gap: 12px;
         }
 
         textarea {
+
             width: 100%;
+
             min-height: 120px;
+
             resize: none;
+
             border: none;
+
             outline: none;
+
             background: transparent;
+
             color: white;
+
             font-size: 16px;
         }
 
         .send-row {
+
             display: flex;
+
             justify-content: flex-end;
         }
 
         button {
-            background: linear-gradient(to right, #6366f1, #8b5cf6);
-            border: none;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 14px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            transition: 0.2s;
-        }
 
-        button:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
+            background: linear-gradient(to right, #6366f1, #8b5cf6);
+
+            border: none;
+
+            color: white;
+
+            padding: 12px 24px;
+
+            border-radius: 14px;
+
+            cursor: pointer;
+
+            font-size: 14px;
+
+            font-weight: bold;
         }
 
     </style>
+
 </head>
 
 <body>
@@ -286,10 +346,6 @@ def home():
         <div class="logo">
             ✨ AI Gateway
         </div>
-
-        <button class="new-chat">
-            + 새 대화
-        </button>
 
         <div class="menu-box">
 
@@ -338,7 +394,7 @@ def home():
             </div>
 
             <div class="result-box" id="result">
-                AI 응답 결과가 여기에 표시됩니다.
+AI 응답 결과가 여기에 표시됩니다.
             </div>
 
         </div>
@@ -355,9 +411,11 @@ def home():
                 ></textarea>
 
                 <div class="send-row">
+
                     <button id="sendBtn">
                         전송
                     </button>
+
                 </div>
 
             </div>
@@ -368,7 +426,7 @@ def home():
 
 <script>
 
-document.getElementById("sendBtn").addEventListener("click", async () => {
+document.getElementById("sendBtn").addEventListener("click", async function() {
 
     const resultBox = document.getElementById("result")
 
@@ -393,6 +451,7 @@ document.getElementById("sendBtn").addEventListener("click", async () => {
                 prompt: document.getElementById("prompt").value
 
             })
+
         })
 
         const result = await response.json()
@@ -402,13 +461,13 @@ document.getElementById("sendBtn").addEventListener("click", async () => {
         if(result.status === "blocked") {
 
             resultBox.innerText =
-                "[차단]\n\n" + result.response
+                "[차단]\\n\\n" + result.response
 
         }
         else if(result.status === "error") {
 
             resultBox.innerText =
-                "[에러]\n\n" + result.response
+                "[에러]\\n\\n" + result.response
 
         }
         else {
@@ -434,7 +493,8 @@ document.getElementById("sendBtn").addEventListener("click", async () => {
 
 </body>
 </html>
-    """
+"""
+
 # =========================
 # Chat API
 # =========================
