@@ -1,4 +1,3 @@
-```python
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -52,7 +51,6 @@ class ChatRequest(BaseModel):
 # Prompt 검사
 # =========================
 
-
 def validate_prompt(prompt):
 
     for keyword in BLOCK_KEYWORDS:
@@ -65,7 +63,6 @@ def validate_prompt(prompt):
 # =========================
 # 로그 저장
 # =========================
-
 
 def save_log(user, model, prompt, result):
 
@@ -88,7 +85,6 @@ def save_log(user, model, prompt, result):
 
     conn.commit()
 
-
 # =========================
 # 메인 화면
 # =========================
@@ -102,206 +98,254 @@ def home():
 
 <head>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
 
-<title>AI Gateway</title>
+    <title>AI Gateway</title>
 
-<style>
+    <style>
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-body {
-    background: #212121;
-    color: #ECECEC;
-    font-family: Arial, sans-serif;
-    height: 100vh;
-    overflow: hidden;
-}
+        body {
 
-.container {
-    display: flex;
-    height: 100vh;
-}
+            font-family: Arial, sans-serif;
 
-/* 좌측 사이드바 */
+            background: #0f172a;
 
-.sidebar {
-    width: 260px;
-    background: #171717;
-    border-right: 1px solid #2f2f2f;
-    display: flex;
-    flex-direction: column;
-    padding: 12px;
-    gap: 12px;
-}
+            color: white;
 
-.logo {
-    font-size: 22px;
-    font-weight: bold;
-    padding: 12px;
-}
+            height: 100vh;
 
-.new-chat {
-    background: #2f2f2f;
-    border: 1px solid #3f3f3f;
-    color: white;
-    padding: 14px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-}
+            display: flex;
+        }
 
-.new-chat:hover {
-    background: #3a3a3a;
-}
+        /* 사이드바 */
 
-.menu-box {
-    background: #202020;
-    border-radius: 10px;
-    padding: 14px;
-}
+        .sidebar {
 
-.menu-title {
-    font-size: 12px;
-    color: #B4B4B4;
-    margin-bottom: 10px;
-}
+            width: 260px;
 
-input,
-select {
-    width: 100%;
-    background: #2f2f2f;
-    color: white;
-    border: 1px solid #404040;
-    border-radius: 8px;
-    padding: 10px;
-}
+            background: #111827;
 
-/* 메인 */
+            border-right: 1px solid #1e293b;
 
-.main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
+            padding: 20px;
 
-.chat-area {
-    flex: 1;
-    overflow-y: auto;
-    padding: 40px 20px 140px 20px;
-}
+            display: flex;
 
-.welcome {
-    text-align: center;
-    margin-top: 140px;
-    font-size: 42px;
-    font-weight: bold;
-    color: #FFFFFF;
-}
+            flex-direction: column;
 
-.sub {
-    text-align: center;
-    margin-top: 10px;
-    color: #B4B4B4;
-    font-size: 16px;
-}
+            gap: 20px;
+        }
 
-.result-box {
-    width: 80%;
-    margin: 40px auto;
-    line-height: 1.8;
-    white-space: pre-wrap;
-    font-size: 15px;
-}
+        .logo {
 
-/* 하단 입력 */
+            font-size: 24px;
 
-.bottom {
-    position: fixed;
-    bottom: 0;
-    left: 260px;
-    right: 0;
-    background: linear-gradient(to top, #212121 70%, transparent);
-    padding: 24px;
-    display: flex;
-    justify-content: center;
-}
+            font-weight: bold;
 
-.input-wrapper {
-    width: 900px;
-    background: #2F2F2F;
-    border: 1px solid #404040;
-    border-radius: 26px;
-    padding: 16px;
-}
+            color: #8b5cf6;
+        }
 
-textarea {
-    width: 100%;
-    min-height: 90px;
-    max-height: 300px;
-    resize: none;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: white;
-    font-size: 16px;
-    line-height: 1.6;
-}
+        .menu-box {
 
-.action-row {
-    margin-top: 12px;
-    display: flex;
-    justify-content: flex-end;
-}
+            background: #111827;
 
-.send-btn {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    border: none;
-    background: white;
-    color: black;
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: bold;
-}
+            border: 1px solid #1e293b;
 
-.send-btn:hover {
-    opacity: 0.9;
-}
+            border-radius: 16px;
 
-.footer {
-    text-align: center;
-    margin-top: 10px;
-    color: #8f8f8f;
-    font-size: 12px;
-}
+            padding: 16px;
+        }
 
-</style>
+        .menu-title {
+
+            font-size: 13px;
+
+            color: #94a3b8;
+
+            margin-bottom: 10px;
+        }
+
+        select,
+        input {
+
+            width: 100%;
+
+            padding: 12px;
+
+            border-radius: 12px;
+
+            border: 1px solid #334155;
+
+            background: #1e293b;
+
+            color: white;
+        }
+
+        /* 메인 */
+
+        .main {
+
+            flex: 1;
+
+            display: flex;
+
+            flex-direction: column;
+
+            justify-content: space-between;
+        }
+
+        .top {
+
+            padding: 30px;
+
+            overflow-y: auto;
+        }
+
+        .welcome {
+
+            font-size: 42px;
+
+            font-weight: bold;
+
+            margin-top: 120px;
+
+            text-align: center;
+
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+
+            -webkit-background-clip: text;
+
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sub {
+
+            text-align: center;
+
+            margin-top: 14px;
+
+            color: #94a3b8;
+
+            font-size: 18px;
+        }
+
+        .result-box {
+
+            margin: 40px auto;
+
+            width: 80%;
+
+            background: #111827;
+
+            border: 1px solid #1e293b;
+
+            border-radius: 20px;
+
+            padding: 24px;
+
+            min-height: 120px;
+
+            white-space: pre-wrap;
+
+            line-height: 1.7;
+
+            font-size: 15px;
+        }
+
+        /* 입력창 */
+
+        .bottom {
+
+            padding: 20px;
+
+            display: flex;
+
+            justify-content: center;
+        }
+
+        .input-box {
+
+            width: 80%;
+
+            background: #111827;
+
+            border: 1px solid #334155;
+
+            border-radius: 24px;
+
+            padding: 18px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 12px;
+        }
+
+        textarea {
+
+            width: 100%;
+
+            min-height: 120px;
+
+            resize: none;
+
+            border: none;
+
+            outline: none;
+
+            background: transparent;
+
+            color: white;
+
+            font-size: 16px;
+        }
+
+        .send-row {
+
+            display: flex;
+
+            justify-content: flex-end;
+        }
+
+        button {
+
+            background: linear-gradient(to right, #6366f1, #8b5cf6);
+
+            border: none;
+
+            color: white;
+
+            padding: 12px 24px;
+
+            border-radius: 14px;
+
+            cursor: pointer;
+
+            font-size: 14px;
+
+            font-weight: bold;
+        }
+
+    </style>
 
 </head>
 
 <body>
 
-<div class="container">
-
-    <!-- 좌측 사이드바 -->
+    <!-- 사이드바 -->
 
     <div class="sidebar">
 
         <div class="logo">
-            AI Gateway
+            ✨ AI Gateway
         </div>
-
-        <button class="new-chat">
-            + New Chat
-        </button>
 
         <div class="menu-box">
 
@@ -316,7 +360,7 @@ textarea {
         <div class="menu-box">
 
             <div class="menu-title">
-                모델 선택
+                AI 모델
             </div>
 
             <select id="model">
@@ -325,7 +369,7 @@ textarea {
                     ChatGPT
                 </option>
 
-                <option value="gemini/gemini-2.0-flash-exp">
+                <option value="gemini/gemini-1.5-flash">
                     Gemini
                 </option>
 
@@ -339,70 +383,48 @@ textarea {
 
     <div class="main">
 
-        <div class="chat-area">
+        <div class="top">
 
             <div class="welcome">
-                무엇을 도와드릴까요?
+                AI Gateway
             </div>
 
             <div class="sub">
-                Secure Enterprise AI Gateway
+                Secure Enterprise Generative AI Portal
             </div>
 
             <div class="result-box" id="result">
+AI 응답 결과가 여기에 표시됩니다.
+            </div>
+
+        </div>
+
+        <!-- 입력창 -->
+
+        <div class="bottom">
+
+            <div class="input-box">
+
+                <textarea
+                    id="prompt"
+                    placeholder="프롬프트를 입력하세요..."
+                ></textarea>
+
+                <div class="send-row">
+
+                    <button id="sendBtn">
+                        전송
+                    </button>
+
+                </div>
+
             </div>
 
         </div>
 
     </div>
-
-</div>
-
-<!-- 하단 입력창 -->
-
-<div class="bottom">
-
-    <div>
-
-        <div class="input-wrapper">
-
-            <textarea
-                id="prompt"
-                placeholder="메시지를 입력하세요"
-            ></textarea>
-
-            <div class="action-row">
-
-                <button
-                    class="send-btn"
-                    id="sendBtn"
-                >
-                    ↑
-                </button>
-
-            </div>
-
-        </div>
-
-        <div class="footer">
-            AI Gateway PoC · Prompt Filtering Enabled
-        </div>
-
-    </div>
-
-</div>
 
 <script>
-
-const textarea = document.getElementById("prompt")
-
-textarea.addEventListener("input", () => {
-
-    textarea.style.height = "auto"
-    textarea.style.height = textarea.scrollHeight + "px"
-
-})
-
 
 document.getElementById("sendBtn").addEventListener("click", async function() {
 
@@ -438,14 +460,14 @@ document.getElementById("sendBtn").addEventListener("click", async function() {
 
         if(result.status === "blocked") {
 
-            resultBox.innerHTML =
-                "<div style='color:#ff6b6b;'>[차단]</div><br>" + result.response
+            resultBox.innerText =
+                "[차단]\\n\\n" + result.response
 
         }
         else if(result.status === "error") {
 
-            resultBox.innerHTML =
-                "<div style='color:#ff6b6b;'>[에러]</div><br>" + result.response
+            resultBox.innerText =
+                "[에러]\\n\\n" + result.response
 
         }
         else {
@@ -472,7 +494,6 @@ document.getElementById("sendBtn").addEventListener("click", async function() {
 </body>
 </html>
 """
-
 
 # =========================
 # Chat API
@@ -541,4 +562,3 @@ def chat(req: ChatRequest):
             "status": "error",
             "response": str(e)
         }
-```
