@@ -7,7 +7,10 @@ from datetime import datetime
 
 app = FastAPI()
 
-# DB 생성
+# =========================
+# SQLite DB 초기화
+# =========================
+
 conn = sqlite3.connect("logs.db", check_same_thread=False)
 cursor = conn.cursor()
 
@@ -24,7 +27,10 @@ CREATE TABLE IF NOT EXISTS logs (
 
 conn.commit()
 
+# =========================
 # 차단 키워드
+# =========================
+
 BLOCK_KEYWORDS = [
     "주민번호",
     "고객DB",
@@ -32,23 +38,42 @@ BLOCK_KEYWORDS = [
     "source code"
 ]
 
-# 요청 구조
+# =========================
+# 요청 모델
+# =========================
+
 class ChatRequest(BaseModel):
     user: str
     model: str
     prompt: str
 
+# =========================
 # Prompt 검사
+# =========================
+
 def validate_prompt(prompt):
+
     for keyword in BLOCK_KEYWORDS:
+
         if keyword.lower() in prompt.lower():
             return False
+
     return True
 
+# =========================
 # 로그 저장
+# =========================
+
 def save_log(user, model, prompt, result):
+
     cursor.execute("""
-    INSERT INTO logs (user, model, prompt, result, created_at)
+    INSERT INTO logs (
+        user,
+        model,
+        prompt,
+        result,
+        created_at
+    )
     VALUES (?, ?, ?, ?, ?)
     """, (
         user,
@@ -57,11 +82,16 @@ def save_log(user, model, prompt, result):
         result,
         datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ))
+
     conn.commit()
 
-# 메인 페이지
+# =========================
+# 메인 화면
+# =========================
+
 @app.get("/", response_class=HTMLResponse)
 def home():
+
     return """
 <html>
 
@@ -76,17 +106,29 @@ def home():
     <label>사용자</label><br>
     <input id="user" value="testuser"><br><br>
 
-    <label>모델</label><br>
+    <label>AI 모델</label><br>
 
     <select id="model">
-        <option value="gpt-4o-mini">GPT-4o-mini</option>
+
+        <option value="gpt-4o-mini">
+            ChatGPT (GPT-4o-mini)
+        </option>
+
+        <option value="gemini/gemini-1.5-flash-latest">
+            Gemini 1.5 Flash
+        </option>
+
     </select>
 
     <br><br>
 
     <label>프롬프트</label><br>
 
-    <textarea id="prompt" rows="10" cols="80"></textarea>
+    <textarea
+        id="prompt"
+        rows="10"
+        cols="80"
+    ></textarea>
 
     <br><br>
 
@@ -166,11 +208,15 @@ document.getElementById("sendBtn").addEventListener("click", async () => {
 </html>
 """
 
-# 채팅 API
+# =========================
+# Chat API
+# =========================
+
 @app.post("/chat")
 def chat(req: ChatRequest):
 
-    # Prompt 검사
+    # Prompt 차단
+
     if not validate_prompt(req.prompt):
 
         save_log(
@@ -188,13 +234,16 @@ def chat(req: ChatRequest):
     try:
 
         response = completion(
+
             model=req.model,
+
             messages=[
                 {
                     "role": "user",
                     "content": req.prompt
                 }
             ]
+
         )
 
         print("FULL RESPONSE:")
