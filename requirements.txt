@@ -3,3 +3,4 @@ uvicorn
 litellm
 sqlalchemy
 python-multipart
+uvicorn
