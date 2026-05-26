@@ -369,7 +369,7 @@ def home():
                     ChatGPT
                 </option>
 
-                <option value="gemini/gemini-1.5-flash">
+                <option value="gemini/gemini-2.0-flash-exp">
                     Gemini
                 </option>
 
