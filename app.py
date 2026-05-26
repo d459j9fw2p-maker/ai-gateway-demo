@@ -89,56 +89,284 @@ def save_log(user, model, prompt, result):
 # 메인 화면
 # =========================
 
+# Gemini 스타일 AI Gateway UI
+
+아래 내용을 `app.py` 의 `home()` 함수 안에 있는 기존 HTML 전체 대신 붙여넣으면 됩니다.
+
+```python
 @app.get("/", response_class=HTMLResponse)
 def home():
 
     return """
-<html>
+<!DOCTYPE html>
+<html lang="ko">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>AI Gateway</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: white;
+            height: 100vh;
+            display: flex;
+        }
+
+        /* 좌측 사이드바 */
+
+        .sidebar {
+            width: 260px;
+            background: #111827;
+            border-right: 1px solid #1e293b;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #8b5cf6;
+        }
+
+        .new-chat {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .new-chat:hover {
+            background: #334155;
+        }
+
+        .menu-box {
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .menu-title {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 10px;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: white;
+        }
+
+        /* 메인 */
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .top {
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .welcome {
+            font-size: 42px;
+            font-weight: bold;
+            margin-top: 120px;
+            text-align: center;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sub {
+            text-align: center;
+            margin-top: 14px;
+            color: #94a3b8;
+            font-size: 18px;
+        }
+
+        /* 결과창 */
+
+        .result-box {
+            margin: 40px auto;
+            width: 80%;
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 20px;
+            padding: 24px;
+            min-height: 120px;
+            white-space: pre-wrap;
+            line-height: 1.7;
+            font-size: 15px;
+        }
+
+        /* 하단 입력창 */
+
+        .bottom {
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .input-box {
+            width: 80%;
+            background: #111827;
+            border: 1px solid #334155;
+            border-radius: 24px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            resize: none;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: white;
+            font-size: 16px;
+        }
+
+        .send-row {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        button {
+            background: linear-gradient(to right, #6366f1, #8b5cf6);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+    </style>
 </head>
 
-<body style="font-family:Arial; margin:40px;">
+<body>
 
-    <h2>사내 AI Gateway</h2>
+    <!-- 사이드바 -->
 
-    <label>사용자</label><br>
-    <input id="user" value="testuser"><br><br>
+    <div class="sidebar">
 
-    <label>AI 모델</label><br>
+        <div class="logo">
+            ✨ AI Gateway
+        </div>
 
-    <select id="model">
+        <button class="new-chat">
+            + 새 대화
+        </button>
 
-        <option value="gpt-4o-mini">
-            ChatGPT (GPT-4o-mini)
-        </option>
+        <div class="menu-box">
 
+            <div class="menu-title">
+                사용자
+            </div>
 
+            <input id="user" value="testuser">
 
-        <option value="gemini/gemini-1.5-flash">
-            Gemini 1.5 Flash
-        </option>
+        </div>
 
-    </select>
+        <div class="menu-box">
 
-    <br><br>
+            <div class="menu-title">
+                AI 모델
+            </div>
 
-    <label>프롬프트</label><br>
+            <select id="model">
 
-    <textarea
-        id="prompt"
-        rows="10"
-        cols="80"
-    ></textarea>
+                <option value="gpt-4o-mini">
+                    ChatGPT
+                </option>
 
-    <br><br>
+                <option value="gemini/gemini-1.5-flash">
+                    Gemini
+                </option>
 
-    <button id="sendBtn">전송</button>
+            </select>
 
-    <h3>결과</h3>
+        </div>
 
-    <pre id="result"></pre>
+    </div>
+
+    <!-- 메인 -->
+
+    <div class="main">
+
+        <div class="top">
+
+            <div class="welcome">
+                AI Gateway
+            </div>
+
+            <div class="sub">
+                Secure Enterprise Generative AI Portal
+            </div>
+
+            <div class="result-box" id="result">
+                AI 응답 결과가 여기에 표시됩니다.
+            </div>
+
+        </div>
+
+        <!-- 입력창 -->
+
+        <div class="bottom">
+
+            <div class="input-box">
+
+                <textarea
+                    id="prompt"
+                    placeholder="프롬프트를 입력하세요..."
+                ></textarea>
+
+                <div class="send-row">
+                    <button id="sendBtn">
+                        전송
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
 
 <script>
 
@@ -176,13 +404,13 @@ document.getElementById("sendBtn").addEventListener("click", async () => {
         if(result.status === "blocked") {
 
             resultBox.innerText =
-                "[차단]\\n" + result.response
+                "[차단]\n\n" + result.response
 
         }
         else if(result.status === "error") {
 
             resultBox.innerText =
-                "[에러]\\n" + result.response
+                "[에러]\n\n" + result.response
 
         }
         else {
@@ -208,7 +436,20 @@ document.getElementById("sendBtn").addEventListener("click", async () => {
 
 </body>
 </html>
-"""
+    """
+```
+
+추가로 추천하는 개선사항:
+
+1. 다크모드 고정
+2. 좌측 대화 히스토리 추가
+3. 모델별 아이콘 추가
+4. Streaming 응답(SSE) 적용
+5. Prompt 차단 시 빨간 경고 박스 표시
+6. 관리자 감사로그 페이지 추가
+7. 사용자별 모델 권한 제어
+8. 업로드 파일 검사 기능 추가
+
 
 # =========================
 # Chat API
