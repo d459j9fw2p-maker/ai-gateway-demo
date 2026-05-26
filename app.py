@@ -165,7 +165,6 @@ document.getElementById("sendBtn").addEventListener("click", async () => {
 </body>
 </html>
 """
-    """
 
 # 채팅 API
 @app.post("/chat")
