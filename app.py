@@ -63,70 +63,108 @@ def save_log(user, model, prompt, result):
 @app.get("/", response_class=HTMLResponse)
 def home():
     return """
-    <html>
-    <head>
-        <title>AI Gateway</title>
-    </head>
-    <body style="font-family:Arial; margin:40px;">
-        <h2>사내 AI Gateway</h2>
+<html>
 
-        <label>사용자</label><br>
-        <input id="user" value="testuser"/><br><br>
+<head>
+    <title>AI Gateway</title>
+</head>
 
-        <label>모델</label><br>
-        <select id="model">
-            <option value="gpt-4o-mini">GPT-4o-mini</option>
-            <option value="claude-3-5-sonnet-20241022">Claude</option>
-            <option value="gemini/gemini-1.5-pro">Gemini</option>
-        </select><br><br>
+<body style="font-family:Arial; margin:40px;">
 
-        <label>프롬프트</label><br>
-        <textarea id="prompt" rows="10" cols="80"></textarea><br><br>
+    <h2>사내 AI Gateway</h2>
 
-        <button onclick="send()">전송</button>
+    <label>사용자</label><br>
+    <input id="user" value="testuser"><br><br>
 
-        <h3>결과</h3>
-        <pre id="result"></pre>
+    <label>모델</label><br>
 
-        <script>
-window.send = async function() {
-            document.getElementById("result").innerText = "처리중..."
+    <select id="model">
+        <option value="gpt-4o-mini">GPT-4o-mini</option>
+    </select>
 
-            const response = await fetch("/chat", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    user: document.getElementById("user").value,
-                    model: document.getElementById("model").value,
-                    prompt: document.getElementById("prompt").value
-                })
+    <br><br>
+
+    <label>프롬프트</label><br>
+
+    <textarea id="prompt" rows="10" cols="80"></textarea>
+
+    <br><br>
+
+    <button id="sendBtn">전송</button>
+
+    <h3>결과</h3>
+
+    <pre id="result"></pre>
+
+<script>
+
+document.getElementById("sendBtn").addEventListener("click", async () => {
+
+    const resultBox = document.getElementById("result")
+
+    resultBox.innerText = "처리중..."
+
+    try {
+
+        const response = await fetch("/chat", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+                user: document.getElementById("user").value,
+
+                model: document.getElementById("model").value,
+
+                prompt: document.getElementById("prompt").value
+
             })
+        })
 
-            const result = await response.json()
+        const result = await response.json()
 
-if(result.status == "blocked") {
+        console.log(result)
 
-    document.getElementById("result").innerText =
-        "[차단]\\n" + result.response
+        if(result.status === "blocked") {
 
-}
-else if(result.status == "error") {
+            resultBox.innerText =
+                "[차단]\\n" + result.response
 
-    document.getElementById("result").innerText =
-        "[에러]\\n" + result.response
+        }
+        else if(result.status === "error") {
 
-}
-else {
+            resultBox.innerText =
+                "[에러]\\n" + result.response
 
-    document.getElementById("result").innerText =
-        result.response || "응답 없음"
+        }
+        else {
 
-}
-        </script>
-    </body>
-    </html>
+            resultBox.innerText =
+                result.response || "응답 없음"
+
+        }
+
+    }
+    catch(err) {
+
+        console.log(err)
+
+        resultBox.innerText =
+            "JavaScript 오류: " + err
+
+    }
+
+})
+
+</script>
+
+</body>
+</html>
+"""
     """
 
 # 채팅 API
