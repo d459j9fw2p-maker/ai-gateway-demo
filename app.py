@@ -4,8 +4,7 @@ from pydantic import BaseModel
 from litellm import completion
 import sqlite3
 from datetime import datetime
-import google.generativeai as genai
-import os
+import re
 
 app = FastAPI()
 
@@ -30,15 +29,65 @@ CREATE TABLE IF NOT EXISTS logs (
 conn.commit()
 
 # =========================
-# 차단 키워드
+# 키워드 차단
 # =========================
 
 BLOCK_KEYWORDS = [
     "주민번호",
     "고객DB",
     "내부기밀",
-    "source code"
+    "source code",
+    "비밀번호",
+    "password"
 ]
+
+# =========================
+# Regex 기반 차단 정책
+# =========================
+
+BLOCK_PATTERNS = {
+
+    # 주민등록번호
+    "주민등록번호":
+        r"\d{6}-\d{7}",
+
+    # 이메일
+    "이메일":
+        r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+",
+
+    # 전화번호
+    "전화번호":
+        r"01[0-9]-\d{3,4}-\d{4}",
+
+    # IP 주소
+    "IP주소":
+        r"\b(?:\d{1,3}\.){3}\d{1,3}\b",
+
+    # SQL 문
+    "SQL":
+        r"SELECT\s+\*\s+FROM",
+
+    # AWS Key
+    "AWS Access Key":
+        r"AKIA[0-9A-Z]{16}",
+
+    # JWT
+    "JWT":
+        r"eyJ[a-zA-Z0-9_-]+\.",
+
+    # Bearer Token
+    "Bearer Token":
+        r"Bearer\s+[A-Za-z0-9-_.]+",
+
+    # Private Key
+    "Private Key":
+        r"BEGIN RSA PRIVATE KEY",
+
+    # 카드번호
+    "카드번호":
+        r"\b(?:\d[ -]*?){13,16}\b"
+
+}
 
 # =========================
 # 요청 모델
@@ -55,12 +104,23 @@ class ChatRequest(BaseModel):
 
 def validate_prompt(prompt):
 
+    # 키워드 검사
+
     for keyword in BLOCK_KEYWORDS:
 
         if keyword.lower() in prompt.lower():
-            return False
 
-    return True
+            return False, f"차단 키워드 탐지: {keyword}"
+
+    # Regex 검사
+
+    for name, pattern in BLOCK_PATTERNS.items():
+
+        if re.search(pattern, prompt, re.IGNORECASE):
+
+            return False, f"민감정보 탐지: {name}"
+
+    return True, "ALLOW"
 
 # =========================
 # 로그 저장
@@ -100,467 +160,191 @@ def home():
 
 <head>
 
-    <meta charset="UTF-8">
-
-    <title>AI Gateway</title>
-
-    <style>
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-
-            font-family: Arial, sans-serif;
-
-            background: #0f172a;
-
-            color: white;
-
-            height: 100vh;
-
-            display: flex;
-        }
-
-        /* 사이드바 */
-
-        .sidebar {
-
-            width: 260px;
-
-            background: #111827;
-
-            border-right: 1px solid #1e293b;
-
-            padding: 20px;
-
-            display: flex;
-
-            flex-direction: column;
-
-            gap: 20px;
-        }
-
-        .logo {
-
-            font-size: 24px;
-
-            font-weight: bold;
-
-            color: #8b5cf6;
-        }
-
-        .menu-box {
-
-            background: #111827;
-
-            border: 1px solid #1e293b;
-
-            border-radius: 16px;
-
-            padding: 16px;
-        }
-
-        .menu-title {
-
-            font-size: 13px;
-
-            color: #94a3b8;
-
-            margin-bottom: 10px;
-        }
-
-        select,
-        input {
-
-            width: 100%;
-
-            padding: 12px;
-
-            border-radius: 12px;
-
-            border: 1px solid #334155;
-
-            background: #1e293b;
-
-            color: white;
-        }
-
-        /* 메인 */
-
-        .main {
-
-            flex: 1;
-
-            display: flex;
-
-            flex-direction: column;
-
-            justify-content: space-between;
-        }
-
-        .top {
-
-            padding: 30px;
-
-            overflow-y: auto;
-        }
-
-        .welcome {
-
-            font-size: 42px;
-
-            font-weight: bold;
-
-            margin-top: 120px;
-
-            text-align: center;
-
-            background: linear-gradient(to right, #60a5fa, #a78bfa);
-
-            -webkit-background-clip: text;
-
-            -webkit-text-fill-color: transparent;
-        }
-
-        .sub {
-
-            text-align: center;
-
-            margin-top: 14px;
-
-            color: #94a3b8;
-
-            font-size: 18px;
-        }
-
-        .result-box {
-
-            margin: 40px auto;
-
-            width: 80%;
-
-            background: #111827;
-
-            border: 1px solid #1e293b;
-
-            border-radius: 20px;
-
-            padding: 24px;
-
-            min-height: 120px;
-
-            white-space: pre-wrap;
-
-            line-height: 1.7;
-
-            font-size: 15px;
-        }
-
-        /* 입력창 */
-
-        .bottom {
-
-            padding: 20px;
-
-            display: flex;
-
-            justify-content: center;
-        }
-
-        .input-box {
-
-            width: 80%;
-
-            background: #111827;
-
-            border: 1px solid #334155;
-
-            border-radius: 24px;
-
-            padding: 18px;
-
-            display: flex;
-
-            flex-direction: column;
-
-            gap: 12px;
-        }
-
-        textarea {
-
-            width: 100%;
-
-            min-height: 120px;
-
-            resize: none;
-
-            border: none;
-
-            outline: none;
-
-            background: transparent;
-
-            color: white;
-
-            font-size: 16px;
-        }
-
-        .send-row {
-
-            display: flex;
-
-            justify-content: flex-end;
-        }
-
-        button {
-
-            background: linear-gradient(to right, #6366f1, #8b5cf6);
-
-            border: none;
-
-            color: white;
-
-            padding: 12px 24px;
-
-            border-radius: 14px;
-
-            cursor: pointer;
-
-            font-size: 14px;
-
-            font-weight: bold;
-        }
-
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AI Gateway</title>
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #212121;
+    color: #ECECEC;
+    font-family: Arial, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+/* 좌측 사이드바 */
+
+.sidebar {
+    width: 260px;
+    background: #171717;
+    border-right: 1px solid #2f2f2f;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    gap: 12px;
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+    padding: 12px;
+}
+
+.new-chat {
+    background: #2f2f2f;
+    border: 1px solid #3f3f3f;
+    color: white;
+    padding: 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.menu-box {
+    background: #202020;
+    border-radius: 10px;
+    padding: 14px;
+}
+
+.menu-title {
+    font-size: 12px;
+    color: #B4B4B4;
+    margin-bottom: 10px;
+}
+
+input,
+select {
+    width: 100%;
+    background: #2f2f2f;
+    color: white;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+/* 메인 */
+
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 40px 20px 140px 20px;
+}
+
+.welcome {
+    text-align: center;
+    margin-top: 140px;
+    font-size: 42px;
+    font-weight: bold;
+    color: #FFFFFF;
+}
+
+.sub {
+    text-align: center;
+    margin-top: 10px;
+    color: #B4B4B4;
+    font-size: 16px;
+}
+
+.result-box {
+    width: 80%;
+    margin: 40px auto;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    font-size: 15px;
+}
+
+/* 하단 입력 */
+
+.bottom {
+    position: fixed;
+    bottom: 0;
+    left: 260px;
+    right: 0;
+    background: linear-gradient(to top, #212121 70%, transparent);
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+}
+
+.input-wrapper {
+    width: 900px;
+    background: #2F2F2F;
+    border: 1px solid #404040;
+    border-radius: 26px;
+    padding: 16px;
+}
+
+textarea {
+    width: 100%;
+    min-height: 90px;
+    max-height: 300px;
+    resize: none;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.action-row {
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.send-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    background: white;
+    color: black;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 10px;
+    color: #8f8f8f;
+    font-size: 12px;
+}
+
+</style>
 
 </head>
 
 <body>
 
-    <!-- 사이드바 -->
+<div class="container">
+
+    <!-- 좌측 사이드바 -->
 
     <div class="sidebar">
 
         <div class="logo">
-            ✨ AI Gateway
+            AI Gateway
         </div>
-
-        <div class="menu-box">
-
-            <div class="menu-title">
-                사용자
-            </div>
-
-            <input id="user" value="testuser">
-
-        </div>
-
-        <div class="menu-box">
-
-            <div class="menu-title">
-                AI 모델
-            </div>
-
-            <select id="model">
-
-                <option value="gpt-4o-mini">
-                    ChatGPT
-                </option>
-
-                <option value="gemini/gemini-2.0-flash-exp">
-                    Gemini
-                </option>
-
-            </select>
-
-        </div>
-
-    </div>
-
-    <!-- 메인 -->
-
-    <div class="main">
-
-        <div class="top">
-
-            <div class="welcome">
-                AI Gateway
-            </div>
-
-            <div class="sub">
-                Secure Enterprise Generative AI Portal
-            </div>
-
-            <div class="result-box" id="result">
-AI 응답 결과가 여기에 표시됩니다.
-            </div>
-
-        </div>
-
-        <!-- 입력창 -->
-
-        <div class="bottom">
-
-            <div class="input-box">
-
-                <textarea
-                    id="prompt"
-                    placeholder="프롬프트를 입력하세요..."
-                ></textarea>
-
-                <div class="send-row">
-
-                    <button id="sendBtn">
-                        전송
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-<script>
-
-document.getElementById("sendBtn").addEventListener("click", async function() {
-
-    const resultBox = document.getElementById("result")
-
-    resultBox.innerText = "처리중..."
-
-    try {
-
-        const response = await fetch("/chat", {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-
-                user: document.getElementById("user").value,
-
-                model: document.getElementById("model").value,
-
-                prompt: document.getElementById("prompt").value
-
-            })
-
-        })
-
-        const result = await response.json()
-
-        console.log(result)
-
-        if(result.status === "blocked") {
-
-            resultBox.innerText =
-                "[차단]\\n\\n" + result.response
-
-        }
-        else if(result.status === "error") {
-
-            resultBox.innerText =
-                "[에러]\\n\\n" + result.response
-
-        }
-        else {
-
-            resultBox.innerText =
-                result.response || "응답 없음"
-
-        }
-
-    }
-    catch(err) {
-
-        console.log(err)
-
-        resultBox.innerText =
-            "JavaScript 오류: " + err
-
-    }
-
-})
-
-</script>
-
-</body>
-</html>
-"""
-
-# =========================
-# Chat API
-# =========================
-
-@app.post("/chat")
-def chat(req: ChatRequest):
-
-    # Prompt 차단
-
-    if not validate_prompt(req.prompt):
-
-        save_log(
-            req.user,
-            req.model,
-            req.prompt,
-            "BLOCK"
-        )
-
-        return {
-            "status": "blocked",
-            "response": "보안정책 위반"
-        }
-
-    try:
-
-        response = completion(
-
-            model=req.model,
-
-            messages=[
-                {
-                    "role": "user",
-                    "content": req.prompt
-                }
-            ]
-
-        )
-
-        print("FULL RESPONSE:")
-        print(response)
-
-        answer = response.choices[0].message.content
-
-        if answer is None:
-            answer = "응답 없음"
-
-        save_log(
-            req.user,
-            req.model,
-            req.prompt,
-            "ALLOW"
-        )
-
-        return {
-            "status": "ok",
-            "response": str(answer)
-        }
-
-    except Exception as e:
-
-        print("ERROR:")
-        print(str(e))
-
-        return {
-            "status": "error",
-            "response": str(e)
-        }
