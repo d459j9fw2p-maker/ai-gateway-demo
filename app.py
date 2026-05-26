@@ -114,7 +114,9 @@ def home():
             ChatGPT (GPT-4o-mini)
         </option>
 
-        <option value="gemini/gemini-1.5-flash-latest">
+
+
+        <option value="gemini/gemini-1.5-flash">
             Gemini 1.5 Flash
         </option>
 
