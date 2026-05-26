@@ -152,8 +152,8 @@ def chat(req: ChatRequest):
             ]
         )
 
-        answer = response["choices"][0]["message"]["content"]
-
+        response.choices[0].message.content
+        
         save_log(
             req.user,
             req.model,
