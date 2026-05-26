@@ -1,10 +1,10 @@
+```python
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from litellm import completion
 import sqlite3
 from datetime import datetime
-import re
 
 app = FastAPI()
 
@@ -29,65 +29,15 @@ CREATE TABLE IF NOT EXISTS logs (
 conn.commit()
 
 # =========================
-# 키워드 차단
+# 차단 키워드
 # =========================
 
 BLOCK_KEYWORDS = [
     "주민번호",
     "고객DB",
     "내부기밀",
-    "source code",
-    "비밀번호",
-    "password"
+    "source code"
 ]
-
-# =========================
-# Regex 기반 차단 정책
-# =========================
-
-BLOCK_PATTERNS = {
-
-    # 주민등록번호
-    "주민등록번호":
-        r"\d{6}-\d{7}",
-
-    # 이메일
-    "이메일":
-        r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+",
-
-    # 전화번호
-    "전화번호":
-        r"01[0-9]-\d{3,4}-\d{4}",
-
-    # IP 주소
-    "IP주소":
-        r"\b(?:\d{1,3}\.){3}\d{1,3}\b",
-
-    # SQL 문
-    "SQL":
-        r"SELECT\s+\*\s+FROM",
-
-    # AWS Key
-    "AWS Access Key":
-        r"AKIA[0-9A-Z]{16}",
-
-    # JWT
-    "JWT":
-        r"eyJ[a-zA-Z0-9_-]+\.",
-
-    # Bearer Token
-    "Bearer Token":
-        r"Bearer\s+[A-Za-z0-9-_.]+",
-
-    # Private Key
-    "Private Key":
-        r"BEGIN RSA PRIVATE KEY",
-
-    # 카드번호
-    "카드번호":
-        r"\b(?:\d[ -]*?){13,16}\b"
-
-}
 
 # =========================
 # 요청 모델
@@ -102,29 +52,20 @@ class ChatRequest(BaseModel):
 # Prompt 검사
 # =========================
 
-def validate_prompt(prompt):
 
-    # 키워드 검사
+def validate_prompt(prompt):
 
     for keyword in BLOCK_KEYWORDS:
 
         if keyword.lower() in prompt.lower():
+            return False
 
-            return False, f"차단 키워드 탐지: {keyword}"
-
-    # Regex 검사
-
-    for name, pattern in BLOCK_PATTERNS.items():
-
-        if re.search(pattern, prompt, re.IGNORECASE):
-
-            return False, f"민감정보 탐지: {name}"
-
-    return True, "ALLOW"
+    return True
 
 # =========================
 # 로그 저장
 # =========================
+
 
 def save_log(user, model, prompt, result):
 
@@ -146,6 +87,7 @@ def save_log(user, model, prompt, result):
     ))
 
     conn.commit()
+
 
 # =========================
 # 메인 화면
@@ -212,6 +154,10 @@ body {
     border-radius: 10px;
     cursor: pointer;
     font-size: 14px;
+}
+
+.new-chat:hover {
+    background: #3a3a3a;
 }
 
 .menu-box {
@@ -326,6 +272,10 @@ textarea {
     font-weight: bold;
 }
 
+.send-btn:hover {
+    opacity: 0.9;
+}
+
 .footer {
     text-align: center;
     margin-top: 10px;
@@ -348,3 +298,247 @@ textarea {
         <div class="logo">
             AI Gateway
         </div>
+
+        <button class="new-chat">
+            + New Chat
+        </button>
+
+        <div class="menu-box">
+
+            <div class="menu-title">
+                사용자
+            </div>
+
+            <input id="user" value="testuser">
+
+        </div>
+
+        <div class="menu-box">
+
+            <div class="menu-title">
+                모델 선택
+            </div>
+
+            <select id="model">
+
+                <option value="gpt-4o-mini">
+                    ChatGPT
+                </option>
+
+                <option value="gemini/gemini-2.0-flash-exp">
+                    Gemini
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+    <!-- 메인 -->
+
+    <div class="main">
+
+        <div class="chat-area">
+
+            <div class="welcome">
+                무엇을 도와드릴까요?
+            </div>
+
+            <div class="sub">
+                Secure Enterprise AI Gateway
+            </div>
+
+            <div class="result-box" id="result">
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- 하단 입력창 -->
+
+<div class="bottom">
+
+    <div>
+
+        <div class="input-wrapper">
+
+            <textarea
+                id="prompt"
+                placeholder="메시지를 입력하세요"
+            ></textarea>
+
+            <div class="action-row">
+
+                <button
+                    class="send-btn"
+                    id="sendBtn"
+                >
+                    ↑
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="footer">
+            AI Gateway PoC · Prompt Filtering Enabled
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const textarea = document.getElementById("prompt")
+
+textarea.addEventListener("input", () => {
+
+    textarea.style.height = "auto"
+    textarea.style.height = textarea.scrollHeight + "px"
+
+})
+
+
+document.getElementById("sendBtn").addEventListener("click", async function() {
+
+    const resultBox = document.getElementById("result")
+
+    resultBox.innerText = "처리중..."
+
+    try {
+
+        const response = await fetch("/chat", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+                user: document.getElementById("user").value,
+
+                model: document.getElementById("model").value,
+
+                prompt: document.getElementById("prompt").value
+
+            })
+
+        })
+
+        const result = await response.json()
+
+        console.log(result)
+
+        if(result.status === "blocked") {
+
+            resultBox.innerHTML =
+                "<div style='color:#ff6b6b;'>[차단]</div><br>" + result.response
+
+        }
+        else if(result.status === "error") {
+
+            resultBox.innerHTML =
+                "<div style='color:#ff6b6b;'>[에러]</div><br>" + result.response
+
+        }
+        else {
+
+            resultBox.innerText =
+                result.response || "응답 없음"
+
+        }
+
+    }
+    catch(err) {
+
+        console.log(err)
+
+        resultBox.innerText =
+            "JavaScript 오류: " + err
+
+    }
+
+})
+
+</script>
+
+</body>
+</html>
+"""
+
+
+# =========================
+# Chat API
+# =========================
+
+@app.post("/chat")
+def chat(req: ChatRequest):
+
+    # Prompt 차단
+
+    if not validate_prompt(req.prompt):
+
+        save_log(
+            req.user,
+            req.model,
+            req.prompt,
+            "BLOCK"
+        )
+
+        return {
+            "status": "blocked",
+            "response": "보안정책 위반"
+        }
+
+    try:
+
+        response = completion(
+
+            model=req.model,
+
+            messages=[
+                {
+                    "role": "user",
+                    "content": req.prompt
+                }
+            ]
+
+        )
+
+        print("FULL RESPONSE:")
+        print(response)
+
+        answer = response.choices[0].message.content
+
+        if answer is None:
+            answer = "응답 없음"
+
+        save_log(
+            req.user,
+            req.model,
+            req.prompt,
+            "ALLOW"
+        )
+
+        return {
+            "status": "ok",
+            "response": str(answer)
+        }
+
+    except Exception as e:
+
+        print("ERROR:")
+        print(str(e))
+
+        return {
+            "status": "error",
+            "response": str(e)
+        }
+```
