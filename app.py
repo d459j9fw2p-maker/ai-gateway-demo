@@ -89,8 +89,7 @@ def home():
         <pre id="result"></pre>
 
         <script>
-        async function send() {
-
+window.send = async function() {
             document.getElementById("result").innerText = "처리중..."
 
             const response = await fetch("/chat", {
