@@ -91,8 +91,6 @@ def save_log(user, model, prompt, result):
 
 # Gemini 스타일 AI Gateway UI
 
-아래 내용을 `app.py` 의 `home()` 함수 안에 있는 기존 HTML 전체 대신 붙여넣으면 됩니다.
-
 ```python
 @app.get("/", response_class=HTMLResponse)
 def home():
@@ -437,20 +435,6 @@ document.getElementById("sendBtn").addEventListener("click", async () => {
 </body>
 </html>
     """
-```
-
-추가로 추천하는 개선사항:
-
-1. 다크모드 고정
-2. 좌측 대화 히스토리 추가
-3. 모델별 아이콘 추가
-4. Streaming 응답(SSE) 적용
-5. Prompt 차단 시 빨간 경고 박스 표시
-6. 관리자 감사로그 페이지 추가
-7. 사용자별 모델 권한 제어
-8. 업로드 파일 검사 기능 추가
-
-
 # =========================
 # Chat API
 # =========================
