@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-litellm>=1.40.0
+litellm>=1.63.11
 sqlalchemy
 python-multipart
 google-generativeai
