@@ -107,15 +107,24 @@ def home():
 
             const result = await response.json()
 
-            if(result.status == "blocked") {
-                document.getElementById("result").innerText =
-                    "[차단]\\n" + result.reason
-            }
-            else {
-                document.getElementById("result").innerText =
-                    result.response
-            }
-        }
+if(result.status == "blocked") {
+
+    document.getElementById("result").innerText =
+        "[차단]\\n" + result.response
+
+}
+else if(result.status == "error") {
+
+    document.getElementById("result").innerText =
+        "[에러]\\n" + result.response
+
+}
+else {
+
+    document.getElementById("result").innerText =
+        result.response || "응답 없음"
+
+}
         </script>
     </body>
     </html>
@@ -125,7 +134,7 @@ def home():
 @app.post("/chat")
 def chat(req: ChatRequest):
 
-    # Prompt 차단
+    # Prompt 검사
     if not validate_prompt(req.prompt):
 
         save_log(
@@ -137,7 +146,7 @@ def chat(req: ChatRequest):
 
         return {
             "status": "blocked",
-            "reason": "보안정책 위반"
+            "response": "보안정책 위반"
         }
 
     try:
@@ -152,8 +161,14 @@ def chat(req: ChatRequest):
             ]
         )
 
-        response.choices[0].message.content
-        
+        print("FULL RESPONSE:")
+        print(response)
+
+        answer = response.choices[0].message.content
+
+        if answer is None:
+            answer = "응답 없음"
+
         save_log(
             req.user,
             req.model,
@@ -163,12 +178,15 @@ def chat(req: ChatRequest):
 
         return {
             "status": "ok",
-            "response": answer
+            "response": str(answer)
         }
 
     except Exception as e:
 
+        print("ERROR:")
+        print(str(e))
+
         return {
             "status": "error",
-            "reason": str(e)
+            "response": str(e)
         }
